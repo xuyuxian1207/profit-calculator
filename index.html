@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>利潤收益計算器</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<style>
+body{
+    margin:0;
+    font-family: "Segoe UI", sans-serif;
+    background: linear-gradient(135deg,#0f172a,#020617);
+    color:white;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+
+.container{
+    background: rgba(15,23,42,0.85);
+    padding:35px;
+    border-radius:18px;
+    width:720px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.6);
+    backdrop-filter: blur(10px);
+}
+
+h2{
+    text-align:center;
+    margin-bottom:25px;
+    font-weight:600;
+    letter-spacing:1px;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-bottom:20px;
+}
+
+th{
+    color:#94a3b8;
+    font-weight:500;
+    padding:10px;
+}
+
+td{
+    padding:8px;
+    text-align:center;
+}
+
+input{
+    width:110px;
+    padding:6px;
+    border-radius:6px;
+    border:1px solid #334155;
+    background:#020617;
+    color:white;
+    text-align:center;
+}
+
+button{
+    border:none;
+    border-radius:10px;
+    padding:10px 16px;
+    cursor:pointer;
+    font-size:14px;
+    transition:0.25s;
+}
+
+.add{
+    background:#22c55e;
+    color:white;
+    font-size:18px;
+    width:42px;
+    height:42px;
+    border-radius:50%;
+}
+
+.add:hover{transform:scale(1.1);}
+
+.run{
+    background:#3b82f6;
+    color:white;
+    width:100%;
+    margin-top:10px;
+}
+
+.run:hover{background:#2563eb;}
+
+.delete{
+    background:#ef4444;
+    color:white;
+}
+
+.delete:hover{background:#dc2626;}
+
+.summary{
+    margin-top:15px;
+    text-align:center;
+    font-size:18px;
+    font-weight:500;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+<h2>利潤收益計算器</h2>
+
+<table id="table">
+<thead>
+<tr>
+<th>售價</th>
+<th>成本</th>
+<th>淨利</th>
+<th>刪除</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+
+<div style="text-align:center;">
+<button class="add" onclick="addRow()">＋</button>
+</div>
+
+<button class="run" onclick="calculate()">執行計算</button>
+
+<div class="summary" id="summary"></div>
+</div>
+
+<script>
+
+function addRow(){
+    const tbody=document.querySelector("#table tbody");
+    const row=document.createElement("tr");
+    row.innerHTML=`
+        <td><input type="number" step="0.01"></td>
+        <td><input type="number" step="0.01"></td>
+        <td class="profit">0.00</td>
+        <td><button class="delete" onclick="deleteRow(this)">X</button></td>
+    `;
+    tbody.appendChild(row);
+}
+
+function deleteRow(btn){
+    btn.closest("tr").remove();
+}
+
+function calculate(){
+    const rows=document.querySelectorAll("#table tbody tr");
+    let totalProfit=0;
+    let data=[["售價","成本","淨利"]];
+
+    rows.forEach(row=>{
+        const inputs=row.querySelectorAll("input");
+        const sell=parseFloat(inputs[0].value)||0;
+        const cost=parseFloat(inputs[1].value)||0;
+        const profit=sell-cost;
+
+        totalProfit+=profit;
+
+        row.querySelector(".profit").innerText=profit.toFixed(2);
+
+        data.push([
+            sell.toFixed(2),
+            cost.toFixed(2),
+            profit.toFixed(2)
+        ]);
+    });
+
+    document.getElementById("summary").innerHTML=
+        `總利益： <span style="color:#22c55e">${totalProfit.toFixed(2)}</span>`;
+
+    setTimeout(()=>{
+        askContinue(data,totalProfit);
+    },200);
+}
+
+function askContinue(data,totalProfit){
+    const cont=confirm(
+        `計算完成 ✅\n\n總利益：${totalProfit.toFixed(2)}\n\n是否繼續？\n(是 = 匯出 Excel)`
+    );
+
+    if(cont){
+        exportExcel(data,totalProfit);
+    }else{
+        resetAll();
+    }
+}
+
+function exportExcel(data,totalProfit){
+    data.push([]);
+    data.push(["總利益",totalProfit.toFixed(2)]);
+
+    const ws=XLSX.utils.aoa_to_sheet(data);
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,"利潤報表");
+    XLSX.writeFile(wb,"利潤報表.xlsx");
+
+    resetAll();
+}
+
+function resetAll(){
+    document.querySelector("#table tbody").innerHTML="";
+    document.getElementById("summary").innerHTML="";
+    addRow();
+}
+
+addRow();
+
+</script>
+
+</body>
+</html>
