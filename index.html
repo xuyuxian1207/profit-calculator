@@ -182,3 +182,40 @@ function calculate(){
         askContinue(data,totalProfit);
     },200);
 }
+
+function askContinue(data,totalProfit){
+    const cont=confirm(
+        `計算完成 ✨\n\n總利益：${totalProfit.toFixed(2)}\n\n是否繼續？\n(是 = 匯出 Excel)`
+    );
+
+    if(cont){
+        exportExcel(data,totalProfit);
+    }else{
+        resetAll();
+    }
+}
+
+function exportExcel(data,totalProfit){
+    data.push([]);
+    data.push(["總利益",totalProfit.toFixed(2)]);
+
+    const ws=XLSX.utils.aoa_to_sheet(data);
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,"公主利潤報表");
+    XLSX.writeFile(wb,"公主利潤報表.xlsx");
+
+    resetAll();
+}
+
+function resetAll(){
+    document.querySelector("#table tbody").innerHTML="";
+    document.getElementById("summary").innerHTML="";
+    addRow();
+}
+
+addRow();
+
+</script>
+
+</body>
+</html>
